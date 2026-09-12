@@ -379,6 +379,11 @@ def engine_namespace(engine, store):
         if value:
             paths.add(Path(value))
     hashes = []
+    identity = getattr(engine, "checkpoint_identity", None)
+    if callable(identity):
+        # GGUF is immutable while open. Include all shard stat identities;
+        # hashing 68 GiB here would turn cache setup into whole-file warming.
+        hashes.extend(identity())
     with store.locked(enforce=True) as db:
         for path in sorted(paths):
             path = path.resolve()
